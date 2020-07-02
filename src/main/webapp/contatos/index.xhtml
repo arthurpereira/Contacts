@@ -1,0 +1,658 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:pm="http://primefaces.org/mobile" xmlns:ui="http://java.sun.com/jsf/facelets">
+
+<f:view contentType="text/html" renderKitId="PRIMEFACES_MOBILE">
+    <h:head>
+        <title>Contatos</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+        <meta http-equiv="Pragma" content="no-cache"/>
+        <meta http-equiv="Expires" content="0"/>
+        <h:outputStylesheet library="css" name="style-main.css"/>
+        <h:outputStylesheet library="css" name="style-responsive.css"/>
+        <h:outputStylesheet library="css" name="bootstrap-grid.min.css"/>
+        <link rel="stylesheet" href="#{request.contextPath}/resources/css/font-awesome.min.css"/>
+        <link rel="icon" href="#{request.contextPath}/resources/img/favicon.ico" type="image/ico"/>
+    </h:head>
+
+<h:body class="notIE modern custom">
+
+    <!-- NOTIFICAÇÃO -->
+
+    <h:form id="form-notificacao">
+        <p:growl id="growl" globalOnly="false" showDetail="false"
+                 autoUpdate="true" sticky="false" life="3000"/>
+    </h:form>
+
+    <!-- DIALOGS -->
+
+    <h:form id="form-dialog">
+
+    </h:form>
+
+    <!-- NAVEGAÇÃO -->
+    <div id="div-fundo">
+
+        <header>
+            <div id="div-topo">
+                <div id="div-titulo">
+                    <div id="div-titulo-conteudo" class="sidebar-open">
+                        <h:panelGroup id="panel-titulo-conteudo" layout="block">
+                            <p:commandLink actionListener="#{contatoBean.limparContato()}"
+                                           rendered="#{contatoBean.isVisualizando() or contatoBean.isCadastrando()}"
+                                           update="panel-titulo-conteudo" immediate="true"
+                                           onclick="mostrarListaDeContatos();">
+                                <div class="div-botao-voltar">
+                                    <div>
+                                        <span class="fa fa-arrow-left"></span>
+                                    </div>
+                                </div>
+                                </p:commandLink>
+                                <p:commandLink actionListener="#{contatoBean.retomaVisualizacao()}"
+                                               rendered="#{contatoBean.isEditando()}"
+                                               update="panel-titulo-conteudo" immediate="true"
+                                               onclick="mostrarViewContato();">
+                                <div class="div-botao-voltar">
+                                    <div>
+                                        <span class="fa fa-arrow-left"></span>
+                                    </div>
+                                </div>
+                            </p:commandLink>
+                            <div class="div-titulo-funcao">
+                                <span class="span-tab-nome">
+                                    <h:outputText value="Nenhum Contato Selecionado"
+                                                  rendered="#{contatoBean.isSemSelecao()}"/>
+                                    <h:outputText value="Cadastrar Contato"
+                                                  rendered="#{contatoBean.isCadastrando()}"/>
+                                    <h:outputText value="Editar Contato"
+                                                  rendered="#{contatoBean.isEditando()}"/>
+                                    <h:outputText value="Visualizar Contato"
+                                                  rendered="#{contatoBean.isVisualizando()}"/>
+                                </span>
+                            </div>
+                            <h:panelGroup rendered="#{contatoBean.isVisualizando()}">
+                                <div class="div-botoes-de-acao">
+                                    <p:commandLink actionListener="#{contatoBean.preparaEdicao()}"
+                                                   update="panel-titulo-conteudo panel-editar-contato"
+                                                   onclick="mostrarFormEditarContato();" immediate="true">
+                                        <div class="botao-funcao-icone">
+                                            <div>
+                                                <span class="fa fa-pencil"></span>
+                                            </div>
+                                        </div>
+                                    </p:commandLink>
+                                    <p:commandLink actionListener="#{contatoBean.deletarContato()}"
+                                                   update="panel-titulo-conteudo panel-conteudo
+                                                           panel-contatos panel-visualizacao"
+                                                   onclick="mostrarListaDeContatos();" immediate="true">
+                                        <div class="botao-funcao-icone">
+                                            <div>
+                                                <span class="fa fa-trash"></span>
+                                            </div>
+                                        </div>
+                                    </p:commandLink>
+                                </div>
+                            </h:panelGroup>
+                        </h:panelGroup>
+                    </div>
+                    <div id="div-titulo-sidebar" class="sidebar-open">
+                        <div id="div-titulo-contatos">
+                            <span class="span-tab-nome">Contatos</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div id="sidebar" class="sidebar-open">
+            <h:panelGroup id="panel-busca" layout="block">
+                <h:form>
+                    <pm:field>
+                        <p:inputText id="campo-busca" value="#{contatoBean.busca}" type="search"
+                                     placeholder="Buscar" styleClass="campo-busca">
+                            <p:ajax event="keyup" listener="#{contatoBean.buscar()}" process="@this"
+                                    update="panel-titulo-conteudo panel-contatos panel-visualizacao"
+                                    onevent="mostrarViewContato();"/>
+                        </p:inputText>
+                    </pm:field>
+                </h:form>
+            </h:panelGroup>
+            <h:panelGroup id="panel-contatos" layout="block">
+                <div id="div-contatos">
+                    <h:panelGroup id="panel-lista-de-contatos">
+                        <h:panelGroup rendered="#{contatoBean.contatos.size() == 0}">
+                            <p class="p-sem-contatos">Não há contatos.</p>
+                        </h:panelGroup>
+                        <p:dataList id="datalist-contatos" var="contato" paginatorAlwaysVisible="false"
+                                    value="#{contatoBean.listaDeContatos}" rowIndexVar="indiceContato"
+                                    emptyMessage="Não há contatos.">
+                            <p:commandLink actionListener="#{contatoBean.preparaVisualizacao(contato)}"
+                                           update="panel-titulo-conteudo panel-visualizacao"
+                                           onclick="mostrarViewContato();" immediate="true">
+                                <table style="width: 100%;margin: 0px 0 -5px 0;table-layout: fixed;">
+                                    <tr>
+                                        <td style="width:55px;text-align: center;">
+                                            <h:graphicImage styleClass="img-contato"
+                                                            value="/foto/#{contato.foto.nome}"
+                                                            rendered="#{contato.foto != null}"/>
+                                            <h:graphicImage styleClass="img-contato"
+                                                            library="img" name="foto-de-perfil.jpg"
+                                                            rendered="#{contato.foto == null}"/>
+                                        </td>
+                                        <td>
+                                            <p class="p-contato-nome">#{contato.nomeCompleto}</p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </p:commandLink>
+                        </p:dataList>
+                    </h:panelGroup>
+
+                    <p:commandLink actionListener="#{contatoBean.preparaCadastro()}"
+                                   update="panel-titulo-conteudo panel-novo-contato"
+                                   onclick="mostrarFormNovoContato();" immediate="true">
+                        <div id="div-botao-novo-contato" class="fixed-action-btn visivel">
+                            <div class="action-icon">
+                                <span class="fa fa-user-plus fa-flip-horizontal"></span>
+                            </div>
+                        </div>
+                    </p:commandLink>
+                </div>
+            </h:panelGroup>
+        </div>
+
+        <div id="conteudo" class="sidebar-open">
+            <h:panelGroup id="panel-conteudo" layout="block">
+
+                <div id="div-visualizacao" class="display-none">
+                    <h:panelGroup id="panel-visualizacao">
+                        <h:panelGroup rendered="#{contatoBean.isVisualizando()}">
+                            <div class="div-container-visualizacao">
+                                <div class="col-xs-12 row">
+                                    <div class="col-md-2 col-xs-1 row"></div>
+                                    <div class="col-md-8 col-xs-10 row">
+                                        <div class="div-visualizacao-col-esq">
+                                            <h:graphicImage styleClass="img-contato-visualizacao"
+                                                            value="/foto/#{contato.foto.nome}"
+                                                            rendered="#{contato.foto != null}"/>
+                                            <h:graphicImage styleClass="img-contato-visualizacao"
+                                                            library="img" name="foto-de-perfil.jpg"
+                                                            rendered="#{contato.foto == null}"/>
+                                        </div>
+                                        <div class="div-visualizacao-col-dir">
+                                            <p class="campo-nome-completo"><h:outputText
+                                                    value="#{contatoBean.contato.nomeCompleto}"/></p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2 col-xs-1 row"></div>
+                                </div>
+                                <h:panelGroup rendered="#{contatoBean.contato.telefones.size() != 0}">
+                                    <div class="div-visualizacao-grupo-info">
+                                        <ui:repeat value="#{contatoBean.contato.telefones}"
+                                                   var="telefone">
+                                        <div class="col-xs-12 row">
+                                            <div class="col-md-2 col-xs-1 row"></div>
+                                            <div class="col-md-8 col-xs-10 row">
+                                                <div class="div-visualizacao-col-esq">
+                                                    <p><h:outputText
+                                                            value="#{telefone.tipo.descricao}"/></p>
+                                                </div>
+                                                <div class="div-visualizacao-col-dir">
+                                                    <p><h:outputText
+                                                            value="#{telefone.numeroFormatado}"/></p>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-2 col-xs-1 row"></div>
+                                        </div>
+                                        </ui:repeat>
+                                    </div>
+                                </h:panelGroup>
+                                <h:panelGroup rendered="#{contatoBean.contato.emails.size() != 0}">
+                                    <div class="div-visualizacao-grupo-info">
+                                        <ui:repeat value="#{contatoBean.contato.emails}"
+                                                   var="email">
+                                            <div class="col-xs-12 row">
+                                                <div class="col-md-2 col-xs-1 row"></div>
+                                                <div class="col-md-8 col-xs-10 row">
+                                                    <div class="div-visualizacao-col-esq">
+                                                        <p><h:outputText
+                                                                value="#{email.tipo.descricao}"/></p>
+                                                    </div>
+                                                    <div class="div-visualizacao-col-dir">
+                                                        <p><h:outputText
+                                                                value="#{email.endereco}"/></p>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-2 col-xs-1 row"></div>
+                                            </div>
+                                        </ui:repeat>
+                                    </div>
+                                </h:panelGroup>
+                            </div>
+                        </h:panelGroup>
+                    </h:panelGroup>
+                </div>
+
+                <div id="div-novo-contato" class="display-none">
+                    <h:panelGroup id="panel-novo-contato">
+                        <h:panelGroup rendered="#{contatoBean.isCadastrando()}">
+                            <div id="div-form-novo-contato" class="div-form-contato">
+                                <div class="col-xs-12 row">
+                                    <div class="col-md-2 col-sm-1 row"></div>
+                                    <div class="col-md-8 col-sm-10 row">
+                                        <h:form id="form-novo-contato">
+                                            <div class="div-container-campo-nome">
+                                                <pm:field>
+                                                    <p:inputText id="contato-novo-nome" styleClass="campo-texto"
+                                                                 value="#{contatoBean.contato.nome}"
+                                                                 placeholder="Nome"/>
+                                                </pm:field>
+                                            </div>
+
+                                            <div class="div-container-campo-sobrenome">
+                                                <pm:field>
+                                                    <p:inputText id="contato-novo-sobrenome" styleClass="campo-texto"
+                                                                 value="#{contatoBean.contato.sobrenome}"
+                                                                 placeholder="Sobrenome"/>
+                                                </pm:field>
+                                            </div>
+
+                                            <h:panelGroup id="panel-novo-contato-campo-telefone" layout="block">
+                                                <p:commandLink actionListener="#{contatoBean.adicionarTelefone()}"
+                                                               update="panel-novo-contato-campo-telefone"
+                                                               rendered="#{contatoBean.contato.telefones.size() == 0}">
+                                                    <div class="div-container-campo-titulo">
+                                                        <div class="ui-field-contain">
+                                                            <div class="campo-texto">
+                                                                <p class="campo-titulo">Número de Telefone</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </p:commandLink>
+                                                <h:panelGroup rendered="#{contatoBean.contato.telefones.size() != 0}">
+                                                    <div class="div-container-campo-titulo tem-campos">
+                                                        <div class="ui-field-contain">
+                                                            <div class="campo-texto">
+                                                                <p class="campo-titulo">Número de Telefone</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </h:panelGroup>
+
+                                                <div class="div-botao-campo">
+                                                    <p:commandLink actionListener="#{contatoBean.adicionarTelefone()}"
+                                                                   update="panel-novo-contato-campo-telefone"
+                                                                   styleClass="botao-campo-icone adicionar">
+                                                        <span class="fa-stack">
+                                                            <i class="fa fa-plus-square-o fa-stack-2x"></i>
+                                                            <i class="fa fa-square-o fa-stack-2x"></i>
+                                                        </span>
+                                                    </p:commandLink>
+                                                </div>
+
+                                                <h:panelGroup rendered="#{contatoBean.contato.telefones.size() != 0}">
+                                                    <ui:repeat var="telefone"
+                                                               value="#{contatoBean.contato.telefones}">
+                                                        <div class="div-container-campo-telefone">
+                                                            <pm:field>
+                                                                <p:inputText value="#{telefone.numero}"
+                                                                             type="tel" styleClass="campo-texto"
+                                                                             placeholder="Número de Telefone"/>
+                                                            </pm:field>
+                                                        </div>
+
+                                                        <div class="div-container-campo-tipo">
+                                                            <pm:field>
+                                                                <p:selectOneMenu id="contato-novo-telefone-tipo"
+                                                                                 value="#{telefone.tipo}">
+                                                                    <f:selectItems value="#{contatoBean.getTiposTelefone()}"
+                                                                                   var="tipo" itemValue="#{tipo}"
+                                                                                   itemLabel="#{tipo.descricao}"/>
+                                                                </p:selectOneMenu>
+                                                            </pm:field>
+                                                        </div>
+
+                                                        <div class="div-botao-campo">
+                                                            <p:commandLink actionListener="#{contatoBean.removerTelefone(telefone)}"
+                                                                           update=":form-novo-contato:panel-novo-contato-campo-telefone"
+                                                                           styleClass="botao-campo-icone remover">
+                                                            <span class="fa-stack">
+                                                                <i class="fa fa-minus-square-o fa-stack-2x"></i>
+                                                                <i class="fa fa-square-o fa-stack-2x"></i>
+                                                            </span>
+                                                            </p:commandLink>
+                                                        </div>
+                                                    </ui:repeat>
+                                                </h:panelGroup>
+                                            </h:panelGroup>
+
+                                            <h:panelGroup id="panel-novo-contato-campo-email" layout="block">
+                                                <p:commandLink actionListener="#{contatoBean.adicionarEmail()}"
+                                                               update="panel-novo-contato-campo-email"
+                                                               rendered="#{contatoBean.contato.emails.size() == 0}">
+                                                    <div class="div-container-campo-titulo">
+                                                        <div class="ui-field-contain">
+                                                            <div class="campo-texto">
+                                                                <p class="campo-titulo">Email</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </p:commandLink>
+                                                <h:panelGroup rendered="#{contatoBean.contato.emails.size() != 0}">
+                                                    <div class="div-container-campo-titulo tem-campos">
+                                                        <div class="ui-field-contain">
+                                                            <div class="campo-texto">
+                                                                <p class="campo-titulo">Email</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </h:panelGroup>
+
+                                                <div class="div-botao-campo">
+                                                    <p:commandLink actionListener="#{contatoBean.adicionarEmail()}"
+                                                                   update="panel-novo-contato-campo-email"
+                                                                   styleClass="botao-campo-icone adicionar">
+                                                        <span class="fa-stack">
+                                                            <i class="fa fa-plus-square-o fa-stack-2x"></i>
+                                                            <i class="fa fa-square-o fa-stack-2x"></i>
+                                                        </span>
+                                                    </p:commandLink>
+                                                </div>
+
+                                                <h:panelGroup rendered="#{contatoBean.contato.emails.size() != 0}">
+                                                    <ui:repeat var="email"
+                                                               value="#{contatoBean.contato.emails}">
+                                                        <div class="div-container-campo-email">
+                                                            <pm:field>
+                                                                <p:inputText value="#{email.endereco}"
+                                                                             type="email" styleClass="campo-texto"
+                                                                             placeholder="Email"/>
+                                                            </pm:field>
+                                                        </div>
+
+                                                        <div class="div-container-campo-tipo">
+                                                            <pm:field>
+                                                                <p:selectOneMenu id="contato-novo-email-tipo"
+                                                                                 value="#{email.tipo}">
+                                                                    <f:selectItems value="#{contatoBean.getTiposEmail()}"
+                                                                                   var="tipo" itemValue="#{tipo}"
+                                                                                   itemLabel="#{tipo.descricao}"/>
+                                                                </p:selectOneMenu>
+                                                            </pm:field>
+                                                        </div>
+
+                                                        <div class="div-botao-campo">
+                                                            <p:commandLink actionListener="#{contatoBean.removerEmail(email)}"
+                                                                           update=":form-novo-contato:panel-novo-contato-campo-email"
+                                                                           styleClass="botao-campo-icone remover">
+                                                            <span class="fa-stack">
+                                                                <i class="fa fa-minus-square-o fa-stack-2x"></i>
+                                                                <i class="fa fa-square-o fa-stack-2x"></i>
+                                                            </span>
+                                                            </p:commandLink>
+                                                        </div>
+                                                    </ui:repeat>
+                                                </h:panelGroup>
+                                            </h:panelGroup>
+
+                                            <p:spacer height="60px" />
+
+                                            <div class="div-rodape-botoes">
+                                                <div>
+                                                    <div class="col-xs-12">
+                                                        <div class="col-md-2 col-sm-1 row"></div>
+                                                        <div class="col-md-8 col-sm-10 row">
+                                                            <div class="col-xs-6 row">
+                                                                <p:commandButton value="Cancelar" styleClass="btn-cancelar-acao"
+                                                                                 actionListener="#{contatoBean.limparContato()}"
+                                                                                 onclick="mostrarListaDeContatos();"
+                                                                                 update="panel-titulo-conteudo"
+                                                                                 immediate="true"/>
+                                                                </div>
+                                                            <div class="col-xs-6 row">
+                                                                <p:commandButton id="btn-contato-novo-confirmar"
+                                                                                 value="Salvar" styleClass="btn-confirmar-acao"
+                                                                                 actionListener="#{contatoBean.cadastrar()}"
+                                                                                 onclick="mostrarViewContato();"
+                                                                                 update="panel-titulo-conteudo panel-conteudo
+                                                                                         panel-contatos"/>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-2 col-sm-1 row"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        </h:form>
+                                    </div>
+                                    <div class="col-md-2 col-sm-1 row"></div>
+                                </div>
+                            </div>
+                        </h:panelGroup>
+                    </h:panelGroup>
+                </div>
+
+                <div id="div-editar-contato" class="display-none">
+                    <h:panelGroup id="panel-editar-contato">
+                        <h:panelGroup rendered="#{contatoBean.isEditando()}">
+                            <div id="div-form-editar-contato" class="div-form-contato">
+                                <div class="col-xs-12 row">
+                                    <div class="col-md-2 col-sm-1 row"></div>
+                                    <div class="col-md-8 col-sm-10 row">
+                                        <h:form id="form-editar-contato">
+                                            <div class="div-container-campo-nome">
+                                                <pm:field>
+                                                    <p:inputText id="contato-editar-nome" styleClass="campo-texto"
+                                                                 value="#{contatoBean.contato.nome}"
+                                                                 placeholder="Nome"/>
+                                                </pm:field>
+                                            </div>
+
+                                            <div class="div-container-campo-sobrenome">
+                                                <pm:field>
+                                                    <p:inputText id="contato-editar-sobrenome" styleClass="campo-texto"
+                                                                 value="#{contatoBean.contato.sobrenome}"
+                                                                 placeholder="Sobrenome"/>
+                                                </pm:field>
+                                            </div>
+
+                                            <h:panelGroup id="panel-editar-contato-campo-telefone" layout="block">
+                                                <p:commandLink actionListener="#{contatoBean.adicionarTelefone()}"
+                                                               update="panel-editar-contato-campo-telefone"
+                                                               rendered="#{contatoBean.contato.telefones.size() == 0}">
+                                                    <div class="div-container-campo-titulo">
+                                                        <div class="ui-field-contain">
+                                                            <div class="campo-texto">
+                                                                <p class="campo-titulo">Número de Telefone</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </p:commandLink>
+                                                <h:panelGroup rendered="#{contatoBean.contato.telefones.size() != 0}">
+                                                    <div class="div-container-campo-titulo tem-campos">
+                                                        <div class="ui-field-contain">
+                                                            <div class="campo-texto">
+                                                                <p class="campo-titulo">Número de Telefone</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </h:panelGroup>
+
+                                                <div class="div-botao-campo">
+                                                    <p:commandLink actionListener="#{contatoBean.adicionarTelefone()}"
+                                                                   update="panel-editar-contato-campo-telefone"
+                                                                   styleClass="botao-campo-icone adicionar">
+                                                        <span class="fa-stack">
+                                                            <i class="fa fa-plus-square-o fa-stack-2x"></i>
+                                                            <i class="fa fa-square-o fa-stack-2x"></i>
+                                                        </span>
+                                                    </p:commandLink>
+                                                </div>
+
+                                                <h:panelGroup rendered="#{contatoBean.contato.telefones.size() != 0}">
+                                                    <ui:repeat var="telefone"
+                                                               value="#{contatoBean.contato.telefones}">
+                                                        <div class="div-container-campo-telefone">
+                                                            <pm:field>
+                                                                <p:inputText value="#{telefone.numero}"
+                                                                             type="tel" styleClass="campo-texto"
+                                                                             placeholder="Número de Telefone"/>
+                                                            </pm:field>
+                                                        </div>
+
+                                                        <div class="div-container-campo-tipo">
+                                                            <pm:field>
+                                                                <p:selectOneMenu id="contato-editar-telefone-tipo"
+                                                                                 value="#{telefone.tipo}">
+                                                                    <f:selectItems value="#{contatoBean.getTiposTelefone()}"
+                                                                                   var="tipo" itemValue="#{tipo}"
+                                                                                   itemLabel="#{tipo.descricao}"/>
+                                                                </p:selectOneMenu>
+                                                            </pm:field>
+                                                        </div>
+
+                                                        <div class="div-botao-campo">
+                                                            <p:commandLink actionListener="#{contatoBean.removerTelefone(telefone)}"
+                                                                           update=":form-editar-contato:panel-editar-contato-campo-telefone"
+                                                                           styleClass="botao-campo-icone remover">
+                                                            <span class="fa-stack">
+                                                                <i class="fa fa-minus-square-o fa-stack-2x"></i>
+                                                                <i class="fa fa-square-o fa-stack-2x"></i>
+                                                            </span>
+                                                            </p:commandLink>
+                                                        </div>
+                                                    </ui:repeat>
+                                                </h:panelGroup>
+                                            </h:panelGroup>
+
+                                            <h:panelGroup id="panel-editar-contato-campo-email" layout="block">
+                                                <p:commandLink actionListener="#{contatoBean.adicionarEmail()}"
+                                                               update="panel-editar-contato-campo-email"
+                                                               rendered="#{contatoBean.contato.emails.size() == 0}">
+                                                    <div class="div-container-campo-titulo">
+                                                        <div class="ui-field-contain">
+                                                            <div class="campo-texto">
+                                                                <p class="campo-titulo">Email</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </p:commandLink>
+                                                <h:panelGroup rendered="#{contatoBean.contato.emails.size() != 0}">
+                                                    <div class="div-container-campo-titulo tem-campos">
+                                                        <div class="ui-field-contain">
+                                                            <div class="campo-texto">
+                                                                <p class="campo-titulo">Email</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </h:panelGroup>
+
+                                                <div class="div-botao-campo">
+                                                    <p:commandLink actionListener="#{contatoBean.adicionarEmail()}"
+                                                                   update="panel-editar-contato-campo-email"
+                                                                   styleClass="botao-campo-icone adicionar">
+                                                        <span class="fa-stack">
+                                                            <i class="fa fa-plus-square-o fa-stack-2x"></i>
+                                                            <i class="fa fa-square-o fa-stack-2x"></i>
+                                                        </span>
+                                                    </p:commandLink>
+                                                </div>
+
+                                                <h:panelGroup rendered="#{contatoBean.contato.emails.size() != 0}">
+                                                    <ui:repeat var="email"
+                                                               value="#{contatoBean.contato.emails}">
+                                                        <div class="div-container-campo-email">
+                                                            <pm:field>
+                                                                <p:inputText value="#{email.endereco}"
+                                                                             type="email" styleClass="campo-texto"
+                                                                             placeholder="Email"/>
+                                                            </pm:field>
+                                                        </div>
+
+                                                        <div class="div-container-campo-tipo">
+                                                            <pm:field>
+                                                                <p:selectOneMenu id="contato-editar-email-tipo"
+                                                                                 value="#{email.tipo}">
+                                                                    <f:selectItems value="#{contatoBean.getTiposEmail()}"
+                                                                                   var="tipo" itemValue="#{tipo}"
+                                                                                   itemLabel="#{tipo.descricao}"/>
+                                                                </p:selectOneMenu>
+                                                            </pm:field>
+                                                        </div>
+
+                                                        <div class="div-botao-campo">
+                                                            <p:commandLink actionListener="#{contatoBean.removerEmail(email)}"
+                                                                           update=":form-editar-contato:panel-editar-contato-campo-email"
+                                                                           styleClass="botao-campo-icone remover">
+                                                            <span class="fa-stack">
+                                                                <i class="fa fa-minus-square-o fa-stack-2x"></i>
+                                                                <i class="fa fa-square-o fa-stack-2x"></i>
+                                                            </span>
+                                                            </p:commandLink>
+                                                        </div>
+                                                    </ui:repeat>
+                                                </h:panelGroup>
+                                            </h:panelGroup>
+
+                                            <p:spacer height="60px" />
+
+                                            <div class="div-rodape-botoes">
+                                                <div>
+                                                    <div class="col-xs-12">
+                                                        <div class="col-md-2 col-sm-1 row"></div>
+                                                        <div class="col-md-8 col-sm-10 row">
+                                                            <div class="col-xs-6 row">
+                                                                <p:commandButton value="Cancelar" styleClass="btn-cancelar-acao"
+                                                                                 actionListener="#{contatoBean.retomaVisualizacao()}"
+                                                                                 onclick="mostrarViewContato();"
+                                                                                 update="panel-titulo-conteudo"
+                                                                                 immediate="true"/>
+                                                            </div>
+                                                            <div class="col-xs-6 row">
+                                                                <p:commandButton id="btn-contato-editar-confirmar"
+                                                                                 value="Salvar" styleClass="btn-confirmar-acao"
+                                                                                 actionListener="#{contatoBean.atualizar()}"
+                                                                                 onclick="mostrarViewContato();"
+                                                                                 update="panel-titulo-conteudo panel-conteudo
+                                                                                         panel-contatos panel-visualizacao"/>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-2 col-sm-1 row"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        </h:form>
+                                    </div>
+                                    <div class="col-md-2 col-sm-1 row"></div>
+                                </div>
+                            </div>
+                        </h:panelGroup>
+                    </h:panelGroup>
+                </div>
+
+            </h:panelGroup>
+
+        </div>
+
+        <div id="separator" class="display-none"></div>
+
+    </div>
+
+    <h:outputScript library="js" name="main.js"/>
+    <h:outputScript library="js" name="viewport-units-buggyfill.hacks.js"/>
+    <h:outputScript library="js" name="viewport-units-buggyfill.js"/>
+    <script>
+        window.viewportUnitsBuggyfill.init({
+            refreshDebounceWait: 50,
+            hacks: window.viewportUnitsBuggyfillHacks
+        });
+    </script>
+</h:body>
+</f:view>
+</html>

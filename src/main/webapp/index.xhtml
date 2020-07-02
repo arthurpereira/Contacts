@@ -1,0 +1,63 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:p="http://primefaces.org/ui">
+    <h:head>
+        <title>Contatos</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+        <h:outputStylesheet library="css" name="style-responsive.css" />
+        <h:outputStylesheet library="css" name="style-login.css" />
+        <link rel="stylesheet" href="#{request.contextPath}/resources/css/font-awesome.min.css" />
+        <link rel="icon" href="#{request.contextPath}/resources/img/favicon.ico" type="image/ico" />
+    </h:head>
+
+    <h:body>
+        <div class="ui-page ui-page-theme-a ui-page-active">
+
+            <div class="wrapper">
+                <div id="interface">
+                    <div class="conteudo row sem-margem">
+                        <div class="row">
+                            <div class="col-xs-12">
+                                <div class="logo">
+                                    <p:graphicImage library="img" name="contacts-app-logo.png" alt="Logo"/>
+                                    <h1>Contatos</h1>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-12">
+                                <div class="head-login">
+                                    <p class="info">Para acessar, você deve fazer o login com uma conta do Facebook.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-12">
+                                <section class="login">
+                                    <article class="facebook">
+                                        <form method="GET" action="login/facebook">
+                                            <button id="btn-facebook"
+                                                    class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-left btn-login-com-facebook">
+                                                <span class="ui-button-icon-left ui-icon ui-c fa fa-fbx-official"></span>
+                                                <span class="ui-button-text ui-c">Entrar com Facebook</span>
+                                            </button>
+                                        </form>
+                                    </article>
+                                </section>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="rodape">
+                        <div class="info-rodape">
+                            <p>Desenvolvido por<br />Ricardo Arthur Pereira Magalhães.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </h:body>
+</html>
